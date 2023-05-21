@@ -4,49 +4,14 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/UserSchema");
 const db = require("./db");
+const UserRoutes = require("../routes/UserRoutes");
 require("dotenv").config();
 
 const app = express();
 app.use(bodyParser.json());
-const jwtSecret = process.env.JWT_SECRET;
+// app.use(express.urlencoded({ extended: false }));
 
-app.post("/signup", async (req, res) => {
-  const { name, email, password } = req.body;
-
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword });
-    await user.save();
-    res.status(200).json({ message: "Signup Successful" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Signup Failed" });
-  }
-});
-
-app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).json({ message: "Invalid password" });
-    }
-
-    const token = jwt.sign({ email: user.email }, jwtSecret, {
-      expiresIn: "1h",
-    });
-    res.status(200).json({ token });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Login failed" });
-  }
-});
+app.use("/api/v1", UserRoutes);
 
 // Middleware to protect routes
 const authMiddleware = (req, res, next) => {
@@ -72,5 +37,5 @@ app.get("/userdetails", authMiddleware, (req, res) => {
 
 // Start the server
 app.listen(process.env.PORT, () => {
-  console.log("Server started on port 3000");
+  console.log("Server started on port" + process.env.PORT);
 });
